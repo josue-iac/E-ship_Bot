@@ -1,0 +1,669 @@
+#########################################################
+############### script name : EshipBot ##################
+############### last update : 16/01/2023 ################
+############### version : 10.12 #########################
+######## description : Reinicia o serviço do e-ship #####
+###### author : Josué Camargo ; Jhonatan Camargo ########
+######## e-mail : josu.joc@gmail.com ####################
+######## e-mail : jhonatan98camargo@hotmail.com #########
+#########################################################
+import pyautogui
+import time
+import schedule
+from textwrap import fill
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from datetime import datetime
+import logging
+import telebot
+import threading
+from PIL import Image
+import random
+#import datetime
+
+logging.basicConfig(filename='botpython-logging.log', level=logging.INFO,
+                    format='%(asctime)s:%(levelname)s:%(message)s')
+
+
+### globais
+ativo = pyautogui.locateOnScreen('ativo.png')
+verconecta2 = pyautogui.locateOnScreen('verconecta2.png')
+srvinfo = 'null'
+srvinfh = 'null'
+CHAVE_API = "chave aqui"
+
+### conecta no servidor: 172.19.0.247 hostname: BRZ01WKSAPP02 (ok)
+def conecta1():
+    time.sleep(1)
+    pyautogui.hotkey('ctrl', 'alt', 't')  
+    time.sleep(5)
+    pyautogui.write('remmina')
+    time.sleep(1)
+    pyautogui.press('enter')
+    time.sleep(6)
+    srv3 = pyautogui.locateOnScreen('247.png')
+    pyautogui.doubleClick(srv3)
+    global srvinfo
+    srvinfo = '172.19.0.247'
+    global srvinfh
+    srvinfh = 'BRZ01WKSAPP02'
+    return
+### confere se conectou, se não tenta mais três vezes (172.19.0.247 hostname: BRZ01WKSAPP02) 
+def verificacao_conecta1():
+    data_e_hora_atuais = datetime.now()
+    data_em_texto = data_e_hora_atuais.strftime('%d/%m/%Y %H:%M')
+    k = 1
+    n = 3 
+    b = 0
+    verconecta1 = pyautogui.locateOnScreen('verconecta1.png', confidence=0.9)
+    print(verconecta1)
+    logging.info(verconecta1)
+    while verconecta1 == None: 
+        while k <= 10:
+            print(f'Conexão falhou, tentiva de número {k}')
+            logging.info(f'Conexão falhou, tentiva de número {k}')
+            k = k + 1
+            pyautogui.hotkey('alt', 'tab')
+            time.sleep(0.2)
+            pyautogui.hotkey('ctrl', 'c')
+            time.sleep(0.2)
+            pyautogui.write('exit')
+            time.sleep(0.2)
+            pyautogui.press('enter')
+            conecta1()
+            time.sleep(23)
+            verconecta1 = pyautogui.locateOnScreen('verconecta1.png', confidence=0.9)
+            if verconecta1 != None:
+                break
+            if k == n:
+                b = b + 1
+                print(f'Conexão ao servidor falhou, tentiva de número {k}, chamar enviar Email2()')
+                logging.info(f'Conexão ao servidor falhou, tentiva de número {k}, chamar enviar Email2()')
+                break
+            
+
+        if verconecta1 == None:
+            print(f'Conexão do bot de reinicialização automatica ao servidor e-ship falhou, tentiva de número {k}')
+            logging.info(f'Conexão do bot de reinicialização automatica ao servidor e-ship falhou, tentiva de número {k}')
+            enviarEmail2()        
+            break
+        else:
+            print(f'Conexão realizada, após {k} tentativas. {data_em_texto}')
+            logging.info(f'Conexão realizada, após {k} tentativas.')
+            break
+
+    if verconecta1 != None:
+        print(f'[172.19.0.247] - Conexão realizada!, {data_em_texto}')
+        logging.info(f'[172.19.0.247] - Conexão realizada!')
+    else:
+        print(f'[172.19.0.247] - Conexão NÃO realizada!, {data_em_texto}')
+        logging.info(f'[172.19.0.247] - Conexão NÃO realizada!')
+### execução do script do eship       
+def script1():
+    pyautogui.press('esc')
+    time.sleep(2)
+    pyautogui.doubleClick(1916,1053)
+    time.sleep(2)
+    iniciar = pyautogui.locateOnScreen('iniciar.png', confidence=0.9) 
+    pyautogui.doubleClick(iniciar)  
+### confere se script rodou, se não tenta mais três vezes 172.19.0.247 hostname: BRZ01WKSAPP02 e 172.19.0.237 hostname: BRZ01WKSAPP07
+def verificacao_script1():
+    data_e_hora_atuais = datetime.now()
+    data_em_texto = data_e_hora_atuais.strftime('%d/%m/%Y %H:%M')
+    q = 1
+    w = 3 
+    e = 0
+    ativo = pyautogui.locateOnScreen('ativo.png', confidence=0.7)
+    print(ativo)
+    while ativo == None:
+        while q <= 10:
+            print(f'Script não rodou, tentativa {q}')
+            logging.info(f'Script não rodou, tentativa {q}')
+            q = q + 1
+            script1()
+            time.sleep(80)
+            ativo = pyautogui.locateOnScreen('ativo.png', confidence=0.7)
+        
+            if ativo != None:
+                break
+            if q == w:
+                e = e + 1
+                print(f"Após {q} falhas no script {srvinfo}, estamos enviando o e-mail!")
+                logging.info(f'Após {q} falhas no script {srvinfo}, estamos enviando o e-mail!')
+                break
+
+        if ativo == None:
+            enviarEmail1()
+            pyautogui.hotkey('ctrl_r', 'f12') 
+            break
+        else:
+            print(f'Script {srvinfo} rodou, após {q} tentativas.\n horário {data_em_texto}')
+            logging.info(f'Script {srvinfo} rodou, após {q} tentativas.')
+            break
+    
+    if ativo != None:
+        print(f'Script Realizado. {data_em_texto}')
+        logging.info(f'Script Realizado.')
+    else:
+        print(f'Script NÃO Realizado! {data_em_texto}')
+        logging.info(f'Script NÃO Realizado!')
+### função para encerrar o script
+def fechar():
+    data_e_hora_atuais = datetime.now()
+    data_em_texto = data_e_hora_atuais.strftime('%d/%m/%Y %H:%M')      
+    pyautogui.hotkey('ctrlright', 'f4')
+    time.sleep(5)
+    pyautogui.hotkey('alt', 'tab')
+    time.sleep(0.5)
+    pyautogui.hotkey('alt', 'f4')
+    time.sleep(2)
+    pyautogui.press('enter')
+    print(f'Script Encerrado, {data_em_texto}')
+    global srvinfo
+    srvinfo = 'null'
+    global srvinfh
+    srvinfh = 'null'
+    return
+### função para execução dos scripts me ordem
+def rodar_script1():
+    conecta1()
+    time.sleep(30)
+    verificacao_conecta1()
+    time.sleep(5)
+    script1()
+    time.sleep(85)
+    verificacao_script1()
+    fechar()
+### envia o e-mail de falha no script de reset do e-ship em caso de falhas
+def enviarEmail1():
+    data_e_hora_atuais = datetime.now()
+    data_em_texto = data_e_hora_atuais.strftime('%d/%m/%Y %H:%M')
+    #configurações SMTP
+    smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    email = 'eventosti@basco.com'
+    senha = 'ntdihlrreryszhlk'
+    email_destino = 'suporte@basco.com'
+
+    
+
+    #textos e-mail erro script
+    mensagem_inicialAD01 = (f"Script rodou 3x e não conseguiu resetar o serviço do E-ship no servidor {srvinfo} hostname: {srvinfh}. Favor verificar com Urgência. \n" )   
+    mensagem_final = (f"\nAtenciosamente - Equipe TI - Branco Motores\nHorario da falha: {data_em_texto}")
+    espacamento = "\n \n"
+    
+    
+    #envia o email erro script
+    smtp.login(email,senha)
+
+    msg = MIMEMultipart()
+    msg['From'] = email
+    msg['To'] = email_destino
+    msg['Subject'] = "Alerta, script não rodou "
+
+    msg.attach(MIMEText(mensagem_inicialAD01, 'plain'))
+    msg.attach(MIMEText(espacamento, 'plain'))
+    msg.attach(MIMEText(mensagem_final, 'plain'))
+
+    #envia o e-mail
+    smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+
+        
+    smtp.quit()
+### envia o e-mail de falha de conexão com os servidores em caso de falha
+def enviarEmail2():
+    data_e_hora_atuais = datetime.now()
+    data_em_texto = data_e_hora_atuais.strftime('%d/%m/%Y %H:%M')
+
+    #configurações SMTP
+    smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    email = 'eventosti@basco.com'
+    senha = 'ntdihlrreryszhlk'
+    email_destino = 'suporte@basco.com'
+
+    
+
+    #textos e-mail erro de conexão
+    mensagem_inicialAD01 = (f"Conexão com o servidor {srvinfo} hostname: {srvinfh} falhou três vezes, impossibilitando resetar o serviço do E-ship. \n")  
+    mensagem_final = (f"\nAtenciosamente - Equipe TI - Branco Motores\nHorario da falha: {data_em_texto}")
+    espacamento = "\n \n"
+    
+
+    #envia o email erro de conexão
+    smtp.login(email,senha)
+
+    msg = MIMEMultipart()
+    msg['From'] = email
+    msg['To'] = email_destino
+    msg['Subject'] = "Alerta, erro de conexão com o servidor BRZ01WKSAPP07"
+    
+    msg.attach(MIMEText(mensagem_inicialAD01, 'plain'))
+    msg.attach(MIMEText(espacamento, 'plain'))
+    msg.attach(MIMEText(mensagem_final, 'plain'))
+
+    #envia o e-mail 
+    smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+
+    
+
+
+    smtp.quit()
+
+### desabilitado - e-mail de envio de erro ao conectar no servidor, f
+"""def enviarEmail3():
+    data_e_hora_atuais = datetime.now()
+    data_em_texto = data_e_hora_atuais.strftime('%d/%m/%Y %H:%M')
+    
+    #configurações SMTP
+    smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    email = 'eventosti@basco.com'
+    senha = 'ntdihlrreryszhlk'
+    email_destino = 'suporte@basco.com'
+
+    #textos e-mail erro de conexão
+    mensagem_inicialAD01 = (f"Conexão com o servidor 172.19.0.237 hostname: BRZ01WKSAPP07 falhou três vezes, impossibilitando resetar o serviço do E-ship. \n")  
+    mensagem_final = (f"\nAtenciosamente - Equipe TI - Branco Motores\nHorario da falha: {data_em_texto}")
+    espacamento = "\n \n"
+    
+
+    #envia o email erro de conexão
+    smtp.login(email,senha)
+
+    msg = MIMEMultipart()
+    msg['From'] = email
+    msg['To'] = email_destino
+    msg['Subject'] = "Alerta, erro de conexão com o servidor BRZ01WKSAPP07"
+    
+    msg.attach(MIMEText(mensagem_inicialAD01, 'plain'))
+    msg.attach(MIMEText(espacamento, 'plain'))
+    msg.attach(MIMEText(mensagem_final, 'plain'))
+
+    #envia o e-mail 
+    smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+
+    
+
+
+    smtp.quit()"""
+### desabilitado - e-mail de envio de erro ao conectar no servidor
+"""def enviarEmail4():
+    data_e_hora_atuais = datetime.now()
+    data_em_texto = data_e_hora_atuais.strftime('%d/%m/%Y %H:%M')
+    
+    #configurações SMTP
+    smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    email = 'eventosti@basco.com'
+    senha = 'ntdihlrreryszhlk'
+    email_destino = 'suporte@basco.com'
+
+    #textos e-mail erro de conexão
+    mensagem_inicialAD01 = (f"Conexão com o servidor 172.19.0.238 hostname: BRZ01WKSAPP09 falhou três vezes, impossibilitando resetar o serviço do E-ship. \n")  
+    mensagem_final = (f"\nAtenciosamente - Equipe TI - Branco Motores\nHorario da falha: {data_em_texto}")
+    espacamento = "\n \n"
+    
+
+    #envia o email erro de conexão
+    smtp.login(email,senha)
+
+    msg = MIMEMultipart()
+    msg['From'] = email
+    msg['To'] = email_destino
+    msg['Subject'] = "Alerta, erro de conexão com o servidor BRZ01WKSAPP09"
+    
+    msg.attach(MIMEText(mensagem_inicialAD01, 'plain'))
+    msg.attach(MIMEText(espacamento, 'plain'))
+    msg.attach(MIMEText(mensagem_final, 'plain'))
+
+    #envia o e-mail 
+    smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+
+    
+
+
+    smtp.quit()"""
+
+### conecta no servidor: 172.19.0.237 hostname: BRZ01WKSAPP07 (ok)
+def conecta2():
+    time.sleep(1)
+    pyautogui.hotkey('ctrl', 'alt', 't')  
+    time.sleep(5)
+    pyautogui.write('remmina')
+    time.sleep(1)
+    pyautogui.press('enter')
+    time.sleep(6)
+    srv1 = pyautogui.locateOnScreen('237.png')
+    pyautogui.doubleClick(srv1)
+    global srvinfo
+    srvinfo = '172.19.0.237'
+    global srvinfh
+    srvinfh = 'BRZ01WKSAPP07'
+    return
+### confere se conectou, se não tenta mais três vezes (172.19.0.237 hostname: BRZ01WKSAPP07)
+def verificacao_conecta2():
+    data_e_hora_atuais = datetime.now()
+    data_em_texto = data_e_hora_atuais.strftime('%d/%m/%Y %H:%M')
+    k = 1
+    n = 3 
+    b = 0
+    verconecta2 = pyautogui.locateOnScreen('verconecta2.png', confidence=0.9)
+    print(verconecta2)
+    logging.info(verconecta2)
+    while verconecta2 == None: 
+        while k <= 10:
+            print(f'Conexão falhou, tentiva de número {k}')
+            logging.info(f'Conexão falhou, tentiva de número {k}')
+            k = k + 1
+            pyautogui.hotkey('alt', 'tab')
+            time.sleep(0.2)
+            pyautogui.hotkey('ctrl', 'c')
+            time.sleep(0.2)
+            pyautogui.write('exit')
+            time.sleep(0.2)
+            pyautogui.press('enter')
+            conecta2()
+            time.sleep(23)
+            verconecta2 = pyautogui.locateOnScreen('verconecta2.png', confidence=0.9)
+            if verconecta2 != None:
+                break
+            if k == n:
+                b = b + 1
+                print(f'Conexão ao servidor falhou, tentiva de número {k}, chamar enviar Email2()')
+                logging.info(f'Conexão ao servidor falhou, tentiva de número {k}, chamar enviar Email2()')
+                break
+            
+
+        if verconecta2 == None:
+            print(f'Conexão do bot de reinicialização automatica ao servidor e-ship falhou, tentiva de número {k}')
+            logging.info(f'Conexão do bot de reinicialização automatica ao servidor e-ship falhou, tentiva de número {k}')
+            enviarEmail2()
+            break
+        else:
+            print(f'Conexão realizada, após {k} tentativas.')
+            logging.info(f'Conexão realizada, após {k} tentativas.')
+            break
+
+    if verconecta2 != None:
+        print(f'[172.19.0.237] - Conexão realizada!, {data_em_texto}')
+        logging.info(f'[172.19.0.237] - Conexão realizada!')
+    else:
+        print(f'[172.19.0.237] - Conexão NÃO realizada!{data_em_texto}')
+        logging.info(f'[172.19.0.237] - Conexão NÃO realizada!')
+### função para execução dos scripts em ordem
+def rodar_script2():
+    conecta2()
+    time.sleep(30)
+    verificacao_conecta2()
+    time.sleep(5)
+    script1()
+    time.sleep(80)
+    verificacao_script1()
+    fechar()
+### conecta no servidor: 172.19.0.238 hostname: BRZ01WKSAPP09
+def conecta3():
+    time.sleep(1)
+    pyautogui.hotkey('ctrl', 'alt', 't')  
+    time.sleep(5)
+    pyautogui.write('remmina')
+    time.sleep(1)
+    pyautogui.press('enter')
+    time.sleep(6)
+    srv2 = pyautogui.locateOnScreen('238.png')
+    pyautogui.doubleClick(srv2)
+    global srvinfo
+    srvinfo = '172.19.0.238'
+    global srvinfh
+    srvinfh = 'BRZ01WKSAPP09'
+    return
+### confere se conectou, se não tenta mais três vezes (172.19.0.238 hostname: BRZ01WKSAPP09)
+def verificacao_conecta3():
+    data_e_hora_atuais = datetime.now()
+    data_em_texto = data_e_hora_atuais.strftime('%d/%m/%Y %H:%M')
+    k = 1
+    n = 3 
+    b = 0
+    verconecta3 = pyautogui.locateOnScreen('verconecta3.png', confidence=0.9)
+    print(verconecta3)
+    logging.info(verconecta3)
+    while verconecta3 == None: 
+        while k <= 10:
+            print(f'Conexão falhou, tentiva de número {k}')
+            logging.info(f'Conexão falhou, tentiva de número {k}')
+            k = k + 1
+            pyautogui.hotkey('alt', 'tab')
+            time.sleep(0.2)
+            pyautogui.hotkey('ctrl', 'c')
+            time.sleep(0.2)
+            pyautogui.write('exit')
+            time.sleep(0.2)
+            pyautogui.press('enter')
+            conecta2()
+            time.sleep(23)
+            verconecta3 = pyautogui.locateOnScreen('verconecta3.png', confidence=0.9)
+            if verconecta3 != None:
+                break
+            if k == n:
+                b = b + 1
+                print(f'Conexão ao servidor falhou, tentiva de número {k}, chamar enviar Email2()')
+                logging.info(f'Conexão ao servidor falhou, tentiva de número {k}, chamar enviar Email2()')
+                break
+            
+
+        if verconecta3 == None:
+            print(f'Conexão do bot de reinicialização automatica ao servidor e-ship falhou, tentiva de número {k}')
+            logging.info(f'Conexão do bot de reinicialização automatica ao servidor e-ship falhou, tentiva de número {k}')
+            enviarEmail2()
+            break
+        else:
+            print(f'Conexão realizada, após {k} tentativas.')
+            logging.info(f'Conexão realizada, após {k} tentativas.')
+            break
+
+    if verconecta3 != None:
+        print(f'[172.19.0.238] - Conexão realizada!, {data_em_texto}')
+        logging.info(f'[172.19.0.238] - Conexão realizada!')
+    else:
+        print(f'[172.19.0.238] - Conexão NÃO realizada!{data_em_texto}')
+        logging.info(f'[172.19.0.238] - Conexão NÃO realizada!')
+### função para execução dos scripts em ordem (238)
+def rodar_script3():
+    conecta3()
+    time.sleep(30)
+    verificacao_conecta3()
+    time.sleep(5)
+    script1()
+    time.sleep(80)
+    verificacao_script1()
+    fechar()
+
+
+
+schedule.every().day.at('06:30').do(rodar_script1)
+schedule.every().day.at('12:30').do(rodar_script1)
+schedule.every().day.at('15:00').do(rodar_script1)
+schedule.every().day.at('20:30').do(rodar_script1)
+    
+schedule.every().day.at('06:45').do(rodar_script2)
+schedule.every().day.at('12:45').do(rodar_script2)
+schedule.every().day.at('15:15').do(rodar_script2)
+schedule.every().day.at('20:45').do(rodar_script2)
+
+schedule.every().day.at('06:55').do(rodar_script3)
+schedule.every().day.at('12:55').do(rodar_script3)
+schedule.every().day.at('15:25').do(rodar_script3)
+schedule.every().day.at('20:55').do(rodar_script3)
+
+
+def minha_tarefa():
+    while 1:
+        schedule.run_pending()
+        time.sleep(1)
+
+thread = threading.Thread(target=minha_tarefa)
+thread.start()
+
+#globais bot telegram
+senha1 = 'senha1'
+senha2 = 'senha2'
+senha3 = 'senha3'
+imagem = 'senha4'
+print237 = 'senha5'
+print238 = 'senha6'
+print247 = 'senha7'
+
+tempo_espera = 300  # tempo em segundos para reiniciar os servidores
+tempo_espera_print = 60 # tempo em segundos para capturar o status atual dos servidores
+ultima_execucao = 0
+bot = telebot.TeleBot(CHAVE_API)
+
+def verificacao(mensagem):
+    global ultima_execucao
+    agora = time.time()
+    if mensagem.text == senha1 or mensagem.text == senha2 or mensagem.text == senha3 or mensagem.text == imagem or mensagem.text == print237 or mensagem.text == print238 or mensagem.text == print247:
+        hora_atual = datetime.now().hour
+
+        if (hora_atual >= 6 and hora_atual < 7) or (hora_atual >= 12 and hora_atual < 13) or (hora_atual >= 15 and hora_atual < 16) or (hora_atual >= 20 and hora_atual < 21):
+            return "Não é possível rodar o script nestes horários: 6h-7h, 12h-13h, 15h-16h, 20h-21h."
+
+        if mensagem.text == print237 or mensagem.text == print238 or mensagem.text == print247 or mensagem.text == imagem:
+            tempo_espera_atual = tempo_espera_print
+        else:
+            tempo_espera_atual = tempo_espera
+
+        if agora - ultima_execucao >= tempo_espera_atual:
+            ultima_execucao = agora
+            return True
+        else:
+            tempo_restante = int(tempo_espera_atual - (agora - ultima_execucao))
+            return f"Aguarde pelo menos {tempo_restante} segundos para rodar o script novamente."
+
+@bot.message_handler(func=lambda mensagem: True)
+def responder(mensagem):
+    global ultima_execucao
+    verifica = verificacao(mensagem)
+    if verifica == True:
+        ultima_execucao = time.time()
+        if mensagem.text == senha1:
+            bot.reply_to(mensagem, "Password aceita, script 172.19.0.247 iniciando. Aguarde pelo menos 5 minutos para rodar novamente.")
+            print(f'API telegram confirmada, rodando script 247 {datetime.now().strftime("%d/%m/%Y %H:%M")}')
+            logging.info(f'Acionamento script 172.19.0.247 por chatbot')
+            rodar_script1()
+            
+        elif mensagem.text == senha2:
+            bot.reply_to(mensagem, "Password aceita, script 172.19.0.238 iniciando. Aguarde pelo menos 5 minutos para rodar novamente.")
+            print(f'API telegram confirmada, rodando script 238 {datetime.now().strftime("%d/%m/%Y %H:%M")}')
+            logging.info(f'Acionamento script 172.19.0.238 por chatbot')
+            rodar_script3()
+            
+        elif mensagem.text == senha3:
+            bot.reply_to(mensagem, "Password aceita, script 172.19.0.237 iniciando. Aguarde pelo menos 5 minutos para rodar novamente.")
+            print(f'API telegram confirmada, rodando script 237 {datetime.now().strftime("%d/%m/%Y %H:%M")}')
+            logging.info(f'Acionamento script 172.19.0.237 por chatbot')
+            rodar_script2()
+        
+        elif mensagem.text == imagem:
+            bot.reply_to(mensagem, "segue o ultimo print gerado pelo sistema")
+            print(f'print de erro solicitado {datetime.now().strftime("%d/%m/%Y %H:%M")}')
+            logging.info(f'print de erro solicitado por chatbot')
+            enviar_imagem(mensagem, '/home/lucas/Documentos/BotEship/remmina.png')
+        
+        elif mensagem.text == print237:
+            bot.reply_to(mensagem, "Solicitado o print da tela atual do 172.19.0.237, aguarde 60 segundos")
+            print(f'print da tela atual do 172.19.0.237 solicitado {datetime.now().strftime("%d/%m/%Y %H:%M")}')
+            logging.info(f'print da tela atual do 172.19.0.237 solicitado por chatbot')
+            agr237(mensagem)
+        
+        elif mensagem.text == print238:
+            bot.reply_to(mensagem, "Solicitado o print da tela atual do 172.19.0.238, aguarde 60 segundos.")
+            print(f'print da tela atual do 172.19.0.238 solicitado {datetime.now().strftime("%d/%m/%Y %H:%M")}')
+            logging.info(f'print da tela atual do 172.19.0.238 solicitado por chatbot')
+            agr238(mensagem)
+        
+        elif mensagem.text == print247:
+            bot.reply_to(mensagem, "Solicitado o print da tela atual do 172.19.0.247, aguarde 60 segundos.")
+            print(f'print da tela atual do 172.19.0.247 solicitado {datetime.now().strftime("%d/%m/%Y %H:%M")}')
+            logging.info(f'print da tela atual do 172.19.0.247 solicitado por chatbot')
+            agr247(mensagem)
+            
+    elif verifica:
+        bot.reply_to(mensagem, verifica)
+    else:
+        texto = "Bem-vindo ao BOT Branco - eship. Digite a senha para rodar os scripts."
+        bot.reply_to(mensagem, texto)
+
+
+def enviar_imagem(mensagem, caminho_imagem):
+    imagem = open(caminho_imagem, 'rb')
+    bot.send_photo(mensagem.chat.id, imagem)
+    imagem.close()
+
+def agr247(mensagem):
+    conecta1()
+    time.sleep(25)
+    pyautogui.hotkey('ctrlright', 'f12')
+    time.sleep(1)
+    enviar_imagem(mensagem, '/home/lucas/Documentos/BotEship/remmina.png')
+    time.sleep(2)
+    bot.reply_to(mensagem, "Prontinho, print coletado agora do servidor 172.19.0.247 agora!")
+    fechar()
+
+
+def agr237(mensagem):
+    conecta2()
+    time.sleep(25)
+    pyautogui.hotkey('ctrlright', 'f12')
+    time.sleep(1)
+    enviar_imagem(mensagem, '/home/lucas/Documentos/BotEship/remmina.png')
+    time.sleep(2)
+    bot.reply_to(mensagem, "Prontinho, print coletado agora do servidor 172.19.0.237 agora!")
+    fechar()
+
+def agr238(mensagem):
+    conecta3()
+    time.sleep(25)
+    pyautogui.hotkey('ctrlright', 'f12')
+    time.sleep(1)
+    enviar_imagem(mensagem, '/home/lucas/Documentos/BotEship/remmina.png')
+    time.sleep(2)
+    bot.reply_to(mensagem, "Prontinho, print coletado agora do servidor 172.19.0.238!")
+    fechar()
+
+respostas = [
+    "Desculpe, não entendi. Pode tentar novamente?",
+    "Não tenho certeza se entendi o que você quis dizer. Pode tentar de outra forma?",
+    "Desculpe, não consegui entender o que você queria dizer.",
+    "Poderia reformular? Não entendi",
+    "Não tenho certeza do que você está tentando dizer. Pode tentar novamente?",
+    "Não consegui entender sua mensagem.",
+    "Desculpe, não entendi.",
+]
+
+resposta_aleatoria = random.choice(respostas)  
+
+bot.polling()
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+"""
+tempo_atual = datetime.datetime.now()
+# Verifique o tipo da mensagem.date
+        tempo_maximo_interacao = 1
+        ultima_interacao = (tempo_atual - datetime.datetime.fromtimestamp(mensagem.date)).total_seconds() / 60
+        if ultima_interacao > tempo_maximo_interacao:
+            # Se o tempo de interação for maior que o tempo máximo permitido, enviar a mensagem de boas-vindas
+            texto = "Bem-vindo ao BOT Branco - eship. Digite a senha para rodar os scripts."
+            bot.reply_to(mensagem, texto)
+        else:
+            # Se o tempo de interação for menor que o tempo máximo permitido, escolher uma resposta aleatória da lista
+            resposta_aleatoria = random.choice(respostas)
+            bot.reply_to(mensagem, resposta_aleatoria)"""
